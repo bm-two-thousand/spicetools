@@ -1,0 +1,47 @@
+name: Build SpiceTools
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          mingw-w64 \
+          zip \
+          upx
+
+    - name: Set Up Toolchains
+      run: |
+        sudo mkdir -p /usr/share/mingw
+        echo "set(CMAKE_SYSTEM_NAME Windows)" > /usr/share/mingw/toolchain-i686-w64-mingw32.cmake
+        echo "set(CMAKE_SYSTEM_PROCESSOR i686)" >> /usr/share/mingw/toolchain-i686-w64-mingw32.cmake
+        echo "set(CMAKE_C_COMPILER i686-w64-mingw32-gcc)" >> /usr/share/mingw/toolchain-i686-w64-mingw32.cmake
+        echo "set(CMAKE_CXX_COMPILER i686-w64-mingw32-g++)" >> /usr/share/mingw/toolchain-i686-w64-mingw32.cmake
+        echo "set(CMAKE_SYSTEM_NAME Windows)" > /usr/share/mingw/toolchain-x86_64-w64-mingw32.cmake
+        echo "set(CMAKE_SYSTEM_PROCESSOR x86_64)" >> /usr/share/mingw/toolchain-x86_64-w64-mingw32.cmake
+        echo "set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc)" >> /usr/share/mingw/toolchain-x86_64-w64-mingw32.cmake
+        echo "set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)" >> /usr/share/mingw/toolchain-x86_64-w64-mingw32.cmake
+
+    - name: Make build_all.sh Executable
+      run: chmod +x ./build_all.sh
+
+    - name: Run Build Script
+      run: ./build_all.sh
+
+    - name: Archive Artifacts
+      if: success()
+      uses: actions/upload-artifact@v3
+      with:
+        name: spicetools-build
+        path: ./dist/spicetools-*.zip
